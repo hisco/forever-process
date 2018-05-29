@@ -56,7 +56,7 @@ class ForeverChildProcess extends EventEmitter{
 
         const child = this['_'+name](...args);
         this.process = child;
-        this.emit('process' , child);
+        this.emit('child' , child);
         this._watcher = this._watchProcess(child , ()=>{
             this[name](...args);
         });
