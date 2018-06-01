@@ -25,14 +25,15 @@ class ForeverChildProcess extends EventEmitter{
             this._setChildProcessSpawn();
 
     }
-    _notifyRestart(){
+    _notifyRestart(child){
+        this.emit('removed', child);
         this.lastRestart = this.Date.now();
     }
     _watchProcess(child ,  onKilled){
         let alreadyKilled = false;
         const restartProcess = ()=>{
             if (!alreadyKilled){
-                this._notifyRestart();
+                this._notifyRestart(child);
                 this.forceKill(child , 3);
                 this.process = null;
                 onKilled();
@@ -60,11 +61,9 @@ class ForeverChildProcess extends EventEmitter{
         this._watcher = this._watchProcess(child , ()=>{
             this[name](...args);
         });
-        
     }
     
     fork(){
-        console.log('forked')
         this._createProcess('fork' , arguments);
     }
     spawn(){
