@@ -1,4 +1,4 @@
-declare module ForeverProcess {
+export declare module ForeverProcess {
 	export interface ForeverChildProcessParams{
 		fork?:()=>number;
 		spawn?:()=>number;
