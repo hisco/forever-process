@@ -1,7 +1,11 @@
+import { EventEmitter } from "events";
+
 export declare module ForeverProcess {
 	export interface ForeverChildProcessParams{
 		fork?:()=>number;
 		spawn?:()=>number;
+		minUptime?:number;
+		spinSleepTime?:number;
 	}
 	export interface ForkOptions {
 		cwd?: string;
@@ -29,8 +33,8 @@ export declare module ForeverProcess {
     export class RestartInfo{
 		constructor();
 	}
-	export class ForeverChildProcess {
-		constructor(params : ForeverChildProcessParams);
+	export class ForeverChildProcess  extends EventEmitter  {
+		constructor(params? : ForeverChildProcessParams);
 		fork(modulePath: string, args?: string[], options?: ForkOptions): void;
 		spawn(command: string, args?: ReadonlyArray<string>, options?: SpawnOptions): void;
 		stop(signal?: string): void;
