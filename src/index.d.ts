@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 
-export declare module ForeverProcess {
+declare module ForeverProcess {
 	export interface ForeverChildProcessParams{
 		fork?:()=>number;
 		spawn?:()=>number;
@@ -45,3 +45,5 @@ export declare module ForeverProcess {
 	export function spawn(command: string, args?: ReadonlyArray<string>, options?: SpawnOptions): ForeverChildProcess;
 	
 }
+
+export = ForeverProcess;
