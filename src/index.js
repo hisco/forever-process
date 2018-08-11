@@ -4,6 +4,9 @@ class ForeverChildProcess extends EventEmitter{
     get Date(){
         return Date;
     }
+    get status(){
+        return this._state;
+    }
     constructor(options){
         super(options);
         this._init(options || {});
@@ -11,9 +14,18 @@ class ForeverChildProcess extends EventEmitter{
     _init({
         fork,
         spawn,
-        minUptime,
-        spinSleepTime
+        minUptime = 1000,
+        spinSleepTime = 30000,
+        spinIdentifyTime = 30000,
+        spinCounter = 8
     }){
+        this._state = 'init';
+        this.minUptime = minUptime;
+        this.spinSleepTime = spinSleepTime;
+        this.spinValidation  = new SpinValidation(
+            spinCounter,
+            spinIdentifyTime
+        );
         if (fork)
             this._fork = fork;
         else
@@ -23,10 +35,11 @@ class ForeverChildProcess extends EventEmitter{
             this._spawn = spawn;
         else
             this._setChildProcessSpawn();
-
     }
     _notifyRestart(child){
         this.emit('removed', child);
+        this._state = 'stopped';
+        this.spinValidation.restart();
         this.lastRestart = this.Date.now();
     }
     _watchProcess(child ,  onKilled){
@@ -50,17 +63,43 @@ class ForeverChildProcess extends EventEmitter{
     }
 
     _createProcess(name , args){
-        if (this.process)
+        const previousState = this._state;
+        if (this.process){
             throw new Error('If you wish to fork another process kill the last one');
+        }
 
-        this.lastRestart = this.Date.now();
+        this._state = 'starting';
+        const isRestart = this.lastRestart != undefined;
+        const uptime = this.lastRestart - this.lastStart;
 
-        const child = this['_'+name](...args);
-        this.process = child;
-        this.emit('child' , child);
-        this._watcher = this._watchProcess(child , ()=>{
-            this[name](...args);
-        });
+        let whenToCreateProcess = 4;
+        if ( isRestart && uptime < this.minUptime ){
+            this._state = previousState;
+            whenToCreateProcess = this.minUptime  - uptime;
+        }
+        if (this.spinValidation.isSpining){
+            this._state = 'spinning';
+            whenToCreateProcess = this.spinSleepTime;
+        }
+
+        setTimeout(()=>{
+            if (this.process){
+                this._state = previousState;
+                throw new Error('If you wish to fork another process kill the last one');
+            }
+            this._state = 'starting';
+
+            this.lastStart = this.Date.now();
+
+            const child = this['_'+name](...args);
+            this._state = 'running';
+
+            this.process = child;
+            this.emit('child' , child);
+            this._watcher = this._watchProcess(child , ()=>{
+                this[name](...args);
+            });
+        } ,whenToCreateProcess);
     }
     
     fork(){
@@ -100,6 +139,31 @@ class ForeverChildProcess extends EventEmitter{
     _setChildProcessSpawn(){
         const {spawn} = require('child_process');
         this._spawn = spawn;
+    }
+}
+
+class SpinValidation{
+    constructor(
+        spinCounter,
+        spinIdentifyTime
+    ){
+        this.counter = 0;
+        this.spinIdentifyTime = spinIdentifyTime;
+        this.spinCounter = spinCounter;
+    }
+    restart(){
+        this.counter++;
+        this.lastRestart = Date.now();
+
+        if (this.timeout){
+            clearTimeout(this.timeout);
+        }
+        this.timeout = setTimeout(()=>{
+            this.counter = 0;
+        } , this.spinIdentifyTime)
+    }
+    get isSpining(){
+        return this.counter > this.spinCounter;
     }
 }
 

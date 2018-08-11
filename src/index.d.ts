@@ -6,6 +6,8 @@ declare module ForeverProcess {
 		spawn?:()=>number;
 		minUptime?:number;
 		spinSleepTime?:number;
+		spinIdentifyTime?:number;
+		spinCounter?:number;
 	}
 	export interface ForkOptions {
 		cwd?: string;
@@ -35,6 +37,7 @@ declare module ForeverProcess {
 	}
 	export class ForeverChildProcess  extends EventEmitter  {
 		constructor(params? : ForeverChildProcessParams);
+		status:string;
 		fork(modulePath: string, args?: string[], options?: ForkOptions): void;
 		spawn(command: string, args?: ReadonlyArray<string>, options?: SpawnOptions): void;
 		stop(signal?: string): void;
