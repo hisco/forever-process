@@ -1,5 +1,7 @@
 # Forver process
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/hisco/forever-process.svg)](https://greenkeeper.io/)
+
 `forever-process` makes sure that your child process scripts will run forever.
 
 ## Simple usage
